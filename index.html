@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+    <link rel="icon" href="img/voltage.png">
+    <title>ЗТТА - Мониторинг электросети</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/datepicker.css">
+    <link rel="stylesheet" href="css/test.css">
+    <!-- jQuery первый, затем Tether, затем Bootstrap JS. -->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/datepicker.min.js"></script>
+    <script src="js/popper.js"></script>
+    <script src="js/tether.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/moment.js"></script>
+    <script src="js/chart.js"></script>
+    <script src="js/chartjs-plugin-zoom.min.js"></script>
+    <script src="js/chartjs-plugin-streaming.js"></script>
+    <script src="js/main.min.js"></script>
+</head>
+<body onload="viewInitialization()">
+    <header>
+        <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+            <a class="navbar-brand" href="#">
+                <img src="img/logo.svg" height="30" class="d-inline-block align-top" alt="Логотип ЗТТА">
+            </a>
+        </nav>
+    </header>
+    <main role="main" class="container-fluid">
+        <div class="row">
+            <div class="col-md-8 sticky-top" style="background-color: #f7f7f7">
+                <canvas id="myChart"></canvas>
+                <div class="row t-p-1">
+                    <div class="col-md-4 t-m-1">
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">Начало:</span>
+                            </div>
+                            <input type="text" aria-label="Start date" class="form-control datepicker-here" data-timepicker="true" id="start_date">
+                        </div>
+                    </div>
+                    <div class="col-md-4 t-m-1">
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">Конец:</span>
+                            </div>
+                            <input type="text" aria-label="Finish date" class="form-control datepicker-here" data-timepicker="true" id="end_date">
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 t-m-1">
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-sm btn-primary" id="set_range">Применить</button>
+                            <button type="button" id="values_for_range" class="btn btn-sm btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-reference="parent">
+                                <span class="sr-only"></span>
+                            </button>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="#">Фазное напряжение</a>
+                                <a class="dropdown-item" href="#">Линейное напряжение</a>
+                                <a class="dropdown-item" href="#">Линейные токи</a>
+                                <a class="dropdown-item" href="#">Полная мощность</a>
+                                <a class="dropdown-item" href="#">Коэфициент мощности</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="#">Сбросить период</a>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary t-m-2 float-right" id="reset_zoom">Сбросить масштаб</button>
+                    </div>
+                </div>
+                <div class="row t-p-1" id="notifications"></div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+                    <div class="btn-group btn-group-toggle btn-group-sm t-m-1" data-toggle="buttons">
+                        <label class="btn btn-outline-secondary active">
+                            <input type="radio" name="options" id="cur_values" autocomplete="off" checked> Текущие
+                        </label>
+                        <label class="btn btn-outline-secondary">
+                            <input type="radio" name="options" id="min_values" autocomplete="off"> Мин
+                        </label>
+                        <label class="btn btn-outline-secondary">
+                            <input type="radio" name="options" id="max_values" autocomplete="off"> Макс
+                        </label>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary invisible" id="reset_min_max">Сбросить</button>
+                    <select class="bootstrap-select border border-secondary custom-select custom-select-sm t-fixed" id="tp_selector">
+                        <option value="1" selected="selected">ТП-630</option>
+                        <option value="2">ТП-7</option>
+                    </select>
+                </div>
+                <div class="row">
+                    <div class="col-md-6" id="u-abc-n">
+                        <h6>Фазное напряжение</h6>
+                        <table class="table t-tc-1">
+                            <tbody>
+                            <tr>
+                                <td>Ua-n</td>
+                                <td id="uan">220 B</td>
+                            </tr>
+                            <tr>
+                                <td>Ub-n</td>
+                                <td id="ubn">221 B</td>
+                            </tr>
+                            <tr>
+                                <td>Uc-n</td>
+                                <td id="ucn">222 B</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-6" id="u-abc">
+                        <h6>Линейное напряжение</h6>
+                        <table class="table t-tc-1">
+                            <tbody>
+                            <tr>
+                                <td>Uab</td>
+                                <td id="uab">230 B</td>
+                            </tr>
+                            <tr>
+                                <td>Ubc</td>
+                                <td id="ubc">231 B</td>
+                            </tr>
+                            <tr>
+                                <td>Uac</td>
+                                <td id="uac">232 B</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6" id="i-abc">
+                        <h6>Линейные токи</h6>
+                        <table class="table t-tc-1">
+                            <tbody>
+                            <tr>
+                                <td>Ia</td>
+                                <td id="ia">270 A</td>
+                            </tr>
+                            <tr>
+                                <td>Ib</td>
+                                <td id="ib">271 A</td>
+                            </tr>
+                            <tr>
+                                <td>Ic</td>
+                                <td id="ic">272 A</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-6" id="p-abc">
+                        <h6>Полная мощность</h6>
+                        <table class="table t-tc-1">
+                            <tbody>
+                            <tr>
+                                <td>Pa</td>
+                                <td id="pa">61.234 KBA</td>
+                            </tr>
+                            <tr>
+                                <td>Pb</td>
+                                <td id="pb">62.345 KBA</td>
+                            </tr>
+                            <tr>
+                                <td>Pc</td>
+                                <td id="pc">63.456 KBA</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6" id="cos-abc">
+                        <h6>Коэфициент мощности</h6>
+                        <table class="table t-tc-1">
+                            <tbody>
+                            <tr>
+                                <td>cos a</td>
+                                <td id="cosa">0.98765</td>
+                            </tr>
+                            <tr>
+                                <td>cos b</td>
+                                <td id="cosb">0.97856</td>
+                            </tr>
+                            <tr>
+                                <td>cos c</td>
+                                <td id="cosc">0.91234</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Средние значения</h6>
+                        <table class="table t-tc-1">
+                            <tbody>
+                            <tr>
+                                <td>P</td>
+                                <td id="p">134.123 KBA</td>
+                            </tr>
+                            <tr>
+                                <td>Pr</td>
+                                <td id="pr">28.345 KBAp</td>
+                            </tr>
+                            <tr>
+                                <td>PA</td>
+                                <td id="p_a">130.456 КВт</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Средний коэф. мощности</h6>
+                        <table class="table t-tc-1">
+                            <tbody>
+                            <tr>
+                                <td>cos</td>
+                                <td id="cos">0.99765</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Частота</h6>
+                        <table class="table t-tc-1">
+                            <tbody>
+                            <tr>
+                                <td>F</td>
+                                <td id="freq">50 HZ</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
